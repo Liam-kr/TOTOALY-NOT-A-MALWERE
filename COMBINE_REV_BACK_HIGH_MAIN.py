@@ -49,9 +49,9 @@ from discord.ext import tasks
 # 1. CONFIGURATION (Paste your tokens here)
 # ==========================================
 TOKENS = {
-    "REVOLUTION": "MTQ3NTAyMjM2MzkwODM3ODY5Ng.GtFeN_.vG0N4wW9D_GQkKzw4xsWOnGEHQhvg_11HyY7OU",
-    "BACKDOOR": "MTQ3NTAwNzI0NjA1OTcwMDMxNw.GLEiar.rAq8V2JszD2v_ZCIzW29sm343DEkZqX88He0QI",
-    "HIGHLEVEL": "MTQ3NDU1MzE0ODA0MjY0NTczNw.GntC2E.xDNLlvF9Yry480C9pALFafA-edhSn5iza79UII"
+    "REVOLUTION": "CHECK_DIHCORD",
+    "BACKDOOR": "CHECK_DIHCORD",
+    "HIGHLEVEL": "CHECK_DIHCORD"
 }
 GUILD_ID = 1474541942065991750
 PC_NAME = socket.gethostname()
@@ -89,65 +89,65 @@ import zipfile
 import urllib.request
 
 
-# def ensure_voice_requirements():
-#     """Checks for FFmpeg and installs required Python audio libraries."""
-#     os_type = platform.system()
-#     print(f"📦 Checking audio requirements for {os_type}...")
+def ensure_voice_requirements():
+    """Checks for FFmpeg and installs required Python audio libraries."""
+    os_type = platform.system()
+    print(f"📦 Checking audio requirements for {os_type}...")
 
-#     # 1. Install Python Packages (PyNaCl is required for the 'Green Circle')
-#     try:
-#         subprocess.check_call([sys.executable, "-m", "pip", "install", "PyNaCl", "discord.py[voice]"])
-#         print("✅ Python voice libraries secured.")
-#     except Exception as e:
-#         print(f"⚠️ Pip install failed: {e}")
+    # 1. Install Python Packages (PyNaCl is required for the 'Green Circle')
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "PyNaCl", "discord.py[voice]"])
+        print("✅ Python voice libraries secured.")
+    except Exception as e:
+        print(f"⚠️ Pip install failed: {e}")
 
-#     # 2. Check/Install FFmpeg
-#     if shutil.which("ffmpeg"):
-#         print("✅ FFmpeg already exists in System PATH.")
-#         return
+    # 2. Check/Install FFmpeg
+    if shutil.which("ffmpeg"):
+        print("✅ FFmpeg already exists in System PATH.")
+        return
 
-#     if os_type == "Windows":
-#         ffmpeg_dir = os.path.join(os.getcwd(), "ffmpeg")
-#         ffmpeg_exe = os.path.join(ffmpeg_dir, "bin", "ffmpeg.exe")
+    if os_type == "Windows":
+        ffmpeg_dir = os.path.join(os.getcwd(), "ffmpeg")
+        ffmpeg_exe = os.path.join(ffmpeg_dir, "bin", "ffmpeg.exe")
 
-#         if not os.path.exists(ffmpeg_exe):
-#             print("📥 FFmpeg missing. Downloading portable version (this may take a minute)...")
-#             try:
-#                 url = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
-#                 zip_path = "ffmpeg.zip"
-#                 urllib.request.urlretrieve(url, zip_path)
+        if not os.path.exists(ffmpeg_exe):
+            print("📥 FFmpeg missing. Downloading portable version (this may take a minute)...")
+            try:
+                url = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
+                zip_path = "ffmpeg.zip"
+                urllib.request.urlretrieve(url, zip_path)
 
-#                 with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-#                     zip_ref.extractall("ffmpeg_temp")
+                with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                    zip_ref.extractall("ffmpeg_temp")
 
-#                 # Locate the bin folder in the extracted content
-#                 for root, dirs, files in os.walk("ffmpeg_temp"):
-#                     if "ffmpeg.exe" in files:
-#                         if os.path.exists(ffmpeg_dir): shutil.rmtree(ffmpeg_dir)
-#                         shutil.move(root, ffmpeg_dir)  # Moves the 'bin' folder content
-#                         break
+                # Locate the bin folder in the extracted content
+                for root, dirs, files in os.walk("ffmpeg_temp"):
+                    if "ffmpeg.exe" in files:
+                        if os.path.exists(ffmpeg_dir): shutil.rmtree(ffmpeg_dir)
+                        shutil.move(root, ffmpeg_dir)  # Moves the 'bin' folder content
+                        break
 
-#                 # Cleanup
-#                 if os.path.exists("ffmpeg_temp"): shutil.rmtree("ffmpeg_temp")
-#                 if os.path.exists(zip_path): os.remove(zip_path)
-#                 print("✨ FFmpeg portable installed to script directory.")
-#             except Exception as e:
-#                 print(f"❌ Auto-download failed: {e}")
+                # Cleanup
+                if os.path.exists("ffmpeg_temp"): shutil.rmtree("ffmpeg_temp")
+                if os.path.exists(zip_path): os.remove(zip_path)
+                print("✨ FFmpeg portable installed to script directory.")
+            except Exception as e:
+                print(f"❌ Auto-download failed: {e}")
 
-#         # Inject portable ffmpeg into the current session's PATH
-#         if os.path.exists(os.path.dirname(ffmpeg_exe)):
-#             os.environ["PATH"] += os.pathsep + os.path.dirname(ffmpeg_exe)
+        # Inject portable ffmpeg into the current session's PATH
+        if os.path.exists(os.path.dirname(ffmpeg_exe)):
+            os.environ["PATH"] += os.pathsep + os.path.dirname(ffmpeg_exe)
 
-#     elif os_type == "Darwin":  # macOS
-#         print("🍎 Attempting Homebrew install...")
-#         subprocess.run(["brew", "install", "ffmpeg"], check=False)
-#     elif os_type == "Linux":
-#         print("🐧 Attempting APT install...")
-#         subprocess.run(["sudo", "apt", "update", "-y", "&&", "sudo", "apt", "install", "ffmpeg", "-y"], check=False)
+    elif os_type == "Darwin":  # macOS
+        print("🍎 Attempting Homebrew install...")
+        subprocess.run(["brew", "install", "ffmpeg"], check=False)
+    elif os_type == "Linux":
+        print("🐧 Attempting APT install...")
+        subprocess.run(["sudo", "apt", "update", "-y", "&&", "sudo", "apt", "install", "ffmpeg", "-y"], check=False)
 
 
-# # Run this at the very start of your script execution
-# ensure_voice_requirements()
+# Run this at the very start of your script execution
+ensure_voice_requirements()
 
 
 
