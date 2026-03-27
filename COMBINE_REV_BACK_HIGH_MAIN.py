@@ -83,71 +83,32 @@ logging_active = False
 shared_category = None
 
 # ==========================================
-# AUTOMATED AUDIO & DEPENDENCY SETUP
+# 3. AUTOMATED AUDIO & DEPENDENCY SETUP
 # ==========================================
-import zipfile
-import urllib.request
+def ensure_voice_requirements():
+    """Ensures PyNaCl is installed and FFmpeg is in the system PATH."""
+    # 1. Check for PyNaCl (Voice Support)
+    try:
+        import nacl
+    except ImportError:
+        print("[-] PyNaCl not found. Installing...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "PyNaCl"])
 
+    # 2. FFmpeg Pathing for Windows
+    # If ffmpeg.exe is in the same folder as this script, we add it to PATH
+    local_ffmpeg = os.path.join(os.getcwd(), "ffmpeg", "bin")
+    if os.path.exists(local_ffmpeg):
+        if local_ffmpeg not in os.environ["PATH"]:
+            os.environ["PATH"] += os.pathsep + local_ffmpeg
+            print(f"[+] Added local FFmpeg to PATH: {local_ffmpeg}")
+    else:
+        # Check if it's already installed globally
+        if not shutil.which("ffmpeg"):
+            print("[!] WARNING: FFmpeg not found. !record and !join will fail.")
+            print("[!] Please place an 'ffmpeg' folder in this directory or install it globally.")
 
-# def ensure_voice_requirements():
-#     """Checks for FFmpeg and installs required Python audio libraries."""
-#     os_type = platform.system()
-#     print(f"📦 Checking audio requirements for {os_type}...")
-
-#     # 1. Install Python Packages (PyNaCl is required for the 'Green Circle')
-#     try:
-#         subprocess.check_call([sys.executable, "-m", "pip", "install", "PyNaCl", "discord.py[voice]"])
-#         print("✅ Python voice libraries secured.")
-#     except Exception as e:
-#         print(f"⚠️ Pip install failed: {e}")
-
-#     # 2. Check/Install FFmpeg
-#     if shutil.which("ffmpeg"):
-#         print("✅ FFmpeg already exists in System PATH.")
-#         return
-
-#     if os_type == "Windows":
-#         ffmpeg_dir = os.path.join(os.getcwd(), "ffmpeg")
-#         ffmpeg_exe = os.path.join(ffmpeg_dir, "bin", "ffmpeg.exe")
-
-#         if not os.path.exists(ffmpeg_exe):
-#             print("📥 FFmpeg missing. Downloading portable version (this may take a minute)...")
-#             try:
-#                 url = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
-#                 zip_path = "ffmpeg.zip"
-#                 urllib.request.urlretrieve(url, zip_path)
-
-#                 with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-#                     zip_ref.extractall("ffmpeg_temp")
-
-#                 # Locate the bin folder in the extracted content
-#                 for root, dirs, files in os.walk("ffmpeg_temp"):
-#                     if "ffmpeg.exe" in files:
-#                         if os.path.exists(ffmpeg_dir): shutil.rmtree(ffmpeg_dir)
-#                         shutil.move(root, ffmpeg_dir)  # Moves the 'bin' folder content
-#                         break
-
-#                 # Cleanup
-#                 if os.path.exists("ffmpeg_temp"): shutil.rmtree("ffmpeg_temp")
-#                 if os.path.exists(zip_path): os.remove(zip_path)
-#                 print("✨ FFmpeg portable installed to script directory.")
-#             except Exception as e:
-#                 print(f"❌ Auto-download failed: {e}")
-
-#         # Inject portable ffmpeg into the current session's PATH
-#         if os.path.exists(os.path.dirname(ffmpeg_exe)):
-#             os.environ["PATH"] += os.pathsep + os.path.dirname(ffmpeg_exe)
-
-#     elif os_type == "Darwin":  # macOS
-#         print("🍎 Attempting Homebrew install...")
-#         subprocess.run(["brew", "install", "ffmpeg"], check=False)
-#     elif os_type == "Linux":
-#         print("🐧 Attempting APT install...")
-#         subprocess.run(["sudo", "apt", "update", "-y", "&&", "sudo", "apt", "install", "ffmpeg", "-y"], check=False)
-
-
-# # Run this at the very start of your script execution
-# ensure_voice_requirements()
+# Run the setup check immediately on start
+ensure_voice_requirements()
 
 
 
@@ -679,35 +640,46 @@ async def end(ctx, index: int):
 recording_active = False
 
 
-# 1. Add this helper function to handle the "Heavy Lifting" (FFmpeg + Upload)
+# --- Process and Upload to Discord ---
 async def process_and_upload(temp_file, final_file, timestamp, ctx):
     try:
-        ffmpeg_path = shutil.which("ffmpeg") or os.path.join(os.getcwd(), "ffmpeg", "bin", "ffmpeg.exe")
-
-        # Convert to H.264 (Mobile friendly)
-        conversion_cmd = [
-            ffmpeg_path, '-y', '-i', temp_file,
+        # 1. Convert using Windows-friendly libx264
+        # Using '-preset ultrafast' to keep CPU usage low on Windows
+        ffmpeg_cmd = [
+            'ffmpeg', '-y', '-i', temp_file,
             '-c:v', 'libx264', '-pix_fmt', 'yuv420p',
-            '-movflags', 'faststart', '-crf', '28', '-preset', 'ultrafast', final_file
+            '-preset', 'ultrafast', '-crf', '28', final_file
         ]
 
-        # Run conversion
-        proc = await asyncio.create_subprocess_exec(
-            *conversion_cmd, stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL
+        process = await asyncio.create_subprocess_exec(
+            *ffmpeg_cmd, stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL
         )
-        await proc.wait()
+        await process.wait()
 
-        # Find channel and send
-        rec_channel = discord.utils.get(ctx.guild.text_channels, name="recordings")
-        if rec_channel and os.path.exists(final_file):
-            await rec_channel.send(f"📱 **Streamable Clip:** `{timestamp}`", file=discord.File(final_file))
+        # 2. Find the #recordings channel in your PC's category
+        guild = ctx.guild
+        category = discord.utils.get(guild.categories, name=PC_NAME)
+        
+        # Look specifically for the 'recordings' text channel
+        target_channel = None
+        if category:
+            target_channel = discord.utils.get(category.text_channels, name="recordings")
+        
+        # If the channel exists, upload the file
+        if target_channel and os.path.exists(final_file):
+            await target_channel.send(
+                content=f"📝 **New Recording** | `{timestamp}`",
+                file=discord.File(final_file)
+            )
+        else:
+            print(f"[!] Could not find #recordings channel in category: {PC_NAME}")
 
-        # Cleanup
-        for f in [temp_file, final_file]:
-            if os.path.exists(f): os.remove(f)
+        # 3. Cleanup: Delete local files after upload to save space
+        if os.path.exists(temp_file): os.remove(temp_file)
+        if os.path.exists(final_file): os.remove(final_file)
+
     except Exception as e:
-        print(f"Upload Error: {e}")
-
+        print(f"[-] Upload Error: {e}")
 
 # 2. The Recording Function (Optimized)
 async def recording_manager(ctx):
